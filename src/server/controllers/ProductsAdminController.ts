@@ -7,13 +7,13 @@ import {
 } from "../../Infra/Controllers/Decorators";
 import { Request, Response } from "express";
 import { inject, injectable } from "inversify";
-import ProductsService from "../services/ProductsService";
+import ProductsAdminService from "../services/ProductsAdminService";
+
 @Controller("/api/Products")
 @injectable()
-export default class ProductsController {
-  constructor(
-    @inject(ProductsService) public readonly ProductsService: ProductsService
-  ) {}
+export default class ProductsAdminController {
+
+  constructor(@inject(ProductsAdminService) public readonly ProductsAdminService: ProductsAdminService) {}
 
   @HttpGet()
   public async GetAllProducts(req: Request, res: Response) {

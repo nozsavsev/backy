@@ -1,5 +1,5 @@
-import { rawControllersRegistry } from "./registry";
-import { ActionMethod } from "./types";
+import { rawControllersRegistry } from "./Registry";
+import { ActionMethod } from "./Types";
 
 export function Controller(path: string) {
   return function (target: any) {

@@ -1,3 +1,22 @@
+this is a proposed skeleton, some parts are there as a placeholder not implemented or ready for production yet.
+judge the idea not specific details of the implementation.
+
+src/infra/ contains the infrastructure code. all the decorators and DI container are here.
+
+src/server/ contains the server code. all the controllers, services, repositories and main.ts are here.
+
+this projects implements a sample server with:
+ - user (register login logout delete update)
+ - userAdmin (delete update)
+
+ - product (read, filter)
+ - productAdmin (CRUD)
+
+authZ is mocked, 
+database is mocked (in memory array)
+models are obviously not meant for production but rather for testing and prototyping.
+i know that storing passwords in plaintext is bad ususally i use Argon2ID with per-user generated salt, which is an industry standard.
+
 Backend is separated into 4 layers:
 
 - Middlware: handels Authz, Logging, etc.
@@ -15,6 +34,9 @@ with an auto mapper defined between them.
 
 ## Controllers
 
+must be imported in main.ts so it will be bundled with the server.
+will be automatically registered and mapped to the express when `mapControllers` is called.
+
 To define a controller define a class with attribute controller with first argument being the path of the controller.
 
 API methods are defined with HttpGet, HttpPost, HttpPut, HttpDelete decorators.  
@@ -23,6 +45,7 @@ Method path is always appended to controller path
 
 ```typescript
 @Controller("/api/users")
+@injectable()
 export class UserController {
   constructor(@inject(UserService) public readonly UserService: UserService) {}
 
@@ -52,8 +75,9 @@ it receives the:
 - ctx:Context object containing request, response and authz context.
 
 return type must be specified for openapi generator to work.
+_openapi generator is not implemented YET_
 
-backy automatically creates an instance of a class and binds method to that intance before passing function to express as handler so you can use dependency injection and all resources in the class of your methods.
+backy automatically creates an instance of a controller class and binds method to that intance before passing function to express as handler so you can use dependency injection and all resources in the class of your methods.
 
 services can be obtained in the constructor of the controller using dependency injection.
 
@@ -66,11 +90,24 @@ export class UserController {
 
 ## Services
 
+must be imported in main.ts so it will be bundled with the server.
+
+will be automatically registered and mapped to the express when `mapServices` is called if service is marked with @Service decorator.
+
+if service is not marked with @Service decorator, it can be registered manually in main.ts binding concrete implementation to an abstract interface.
+
+`registerService<InterfaceName, ImplementationName>(Lifetime: "Singleton" | "Scoped")` function is used to register a service manually.
+
+- Transient: _default_ DI Container creates a new instance of the service each time it is requested.
+- Singleton: DI Container creates a single instance of the service and reuses it for all requests.
+- Scoped: _not implemented yet_ DI Container creates a new instance of the service for each request.
+
 Services are classes that contain the business logic.
 marked with @injectable decorator to be consumed by controllers.
 services utilize repositories to access the data and 3rd party APIs.
 
 ```typescript
+@Service(lifetime: "Singleton")
 @injectable()
 export class UserService {
   constructor(
@@ -81,6 +118,9 @@ export class UserService {
 
 ## Repositories
 
+must be imported in main.ts so it will be bundled with the server.
+are registered with infra as a service, with teh same decorators as services.
+
 Repositories are classes that contain the data access and 3rd party integrations logic.
 marked with @injectable decorator to be consumed by services.
 repositories utilize databases and 3rd party APIs.
@@ -90,6 +130,7 @@ Base repository implements basic CRUD operations and universal caching.
 
 ```typescript
 @injectable()
+@Service()
 export class UserRepository extends BaseRepository<DB_User> {
   constructor(
     @inject(DatabaseService) public readonly DatabaseService: DatabaseService
@@ -99,8 +140,8 @@ export class UserRepository extends BaseRepository<DB_User> {
 }
 ```
 
-_DatabaseService i don't know what we will use so i'll leave it as a placeholder_
-_please let's use prism as database service_
+_DatabaseService i don't know what we will use so i'll leave it as a placeholder_  
+_please let's use prisma as database service_
 
 if repository exposes 3rd party integrations:
 

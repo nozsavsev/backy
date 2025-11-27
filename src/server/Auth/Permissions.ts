@@ -1,0 +1,1 @@
+export type PermissionType = "manageUsers" | "manageProducts" | "readProducts";

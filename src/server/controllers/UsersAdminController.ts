@@ -4,19 +4,21 @@ import {
   HttpGet,
   HttpPost,
   HttpPut,
-} from "../../infra/controllers/decorators";
+} from "../../Infra/Controllers/Decorators";
 import { Request, Response } from "express";
-import UserService from "../services/UserService";
 import { inject, injectable } from "inversify";
+import UsersAdminService from "../services/UsersAdminService";
 
 @Controller("/api/Users")
 @injectable()
-export default class UsersController {
-  constructor(@inject(UserService) public readonly UserService: UserService) {}
+export default class UsersAdminController {
+  constructor(
+    @inject(UsersAdminService)
+    public readonly UsersAdminService: UsersAdminService
+  ) {}
 
   @HttpGet("GetAllUsers")
   public async GetAllUsers(req: Request, res: Response) {
-    const users = await this.UserService.getAllUsers();
     res.json({ message: "All users retrieved" });
   }
 

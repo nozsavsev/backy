@@ -1,13 +1,15 @@
-import { ActionDescriptor, ActionMethod, ControllerDescriptor } from "./types";
 import * as core from "express-serve-static-core";
 import path from "path";
 import DIContainer from "../DI/DIContainer";
-import { rawControllersRegistry } from "./registry";
+import { rawControllersRegistry } from "./Registry";
+import { ActionMethod, ControllerDescriptor } from "./Types";
 
 export const controllersRegistry: ControllerDescriptor[] = [];
 
 function registerController(controllerClass: any) {
   const controllerPath = Reflect.getMetadata("controller", controllerClass);
+
+  DIContainer.bind(controllerClass).toSelf().inSingletonScope();
 
   const controller: ControllerDescriptor = {
     instance: DIContainer.get(controllerClass),
