@@ -11,6 +11,7 @@ import { injectable } from "inversify";
 @Controller("/api/Products")
 @injectable()
 export default class ProductsController {
+
   @HttpGet()
   public async GetAllProducts(req: Request, res: Response) {
     res.json({ message: "All products retrieved" });
