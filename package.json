@@ -4,6 +4,7 @@
   "description": "Node.js Express TypeScript project",
   "main": "dist/server/main.js",
   "scripts": {
+    "prepare": "ts-patch install",
     "dev": "nodemon",
     "build": "tsc",
     "start": "node dist/server/main.js"
@@ -23,6 +24,7 @@
     "@types/node": "^20.10.0",
     "nodemon": "^3.0.2",
     "reflect-metadata": "^0.2.2",
+    "ts-patch": "^3.3.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.3.3"
   }

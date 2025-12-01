@@ -12,10 +12,16 @@ this projects implements a sample server with:
  - product (read, filter)
  - productAdmin (CRUD)
 
+# important:
 authZ is mocked, 
 database is mocked (in memory array)
 models are obviously not meant for production but rather for testing and prototyping.
 i know that storing passwords in plaintext is bad ususally i use Argon2ID with per-user generated salt, which is an industry standard.
+
+the part with parameter parsing and validation is far from ideal and due to implications of typescript may never be, so there is a possibility that we couldn't use it in production.
+
+anonymous body types are not supported.
+anonymous return types are not supported.
 
 Backend is separated into 4 layers:
 
@@ -27,7 +33,7 @@ Backend is separated into 4 layers:
 ## Data Models
 
 For every data model there should be a DB_Model and DTO_Model.
-with an auto mapper defined between them.
+with an auto mapper defined between them. (not implemented YET)
 
 - DB_Models is stored in a database and used internally
 - DTO_Models are allowed to leave backend and be presented to a user and don't contain any sensetive data.
@@ -242,3 +248,20 @@ export class ManageUsersPolicy extends AuthorizationPolicy {
   }
 }
 ```
+
+## Implementation details
+
+inversify is used as DI container.
+controllers are injectable cuz i need to get an instance to pass methods to express (and bind them)
+
+scoped DI is not implemented yet because i need to research how to connect it to express. (scoped lifetime is supported by inversify but the idea is that services are created once per request. but i don't know how to do that with express. along with that for now since all deps are loaded on the creation of the controller intance all services are actually singletons (kinda) but it is solvable if nessesary)
+
+services and repositories are registered as services with @Service decorator. (it's just a name of the decorator nothing more)
+inside this decorator simply pushes them into an array to later be registered with inversify for future injections (in main ts).
+
+controller decorators do the same thing but for controllers. also push them into an array to later be registered with express.
+@Http{Get,Post,Put,Delete} decorators are used to define the HTTP method and path of the controller method. 
+parm names and types are collected by ts transfromer and injected as parameters into tehse decorators compile time.
+by default primitive types are treated as query parameters and other types are treated as body parameters.
+only one body is allowed per method.
+first argument is always context object that contains request, response and authz context.

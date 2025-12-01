@@ -4,34 +4,36 @@ import {
   HttpPost,
   HttpPut,
   HttpDelete,
+  Query,
+  Body,
 } from "../../Infra/Controllers/Decorators";
 import { Request, Response } from "express";
 import { inject, injectable } from "inversify";
 import ProductsAdminService from "../services/ProductsAdminService";
+import { RequestContext } from "../../Infra/Controllers/Types";
+import GetAllProductsRequest from "./dto/GetAllProductsRequest";
 
-@Controller("/api/Products")
+@Controller("/api/Admin/Products")
 @injectable()
 export default class ProductsAdminController {
+  constructor(
+    @inject(ProductsAdminService)
+    public readonly ProductsAdminService: ProductsAdminService
+  ) {}
 
-  constructor(@inject(ProductsAdminService) public readonly ProductsAdminService: ProductsAdminService) {}
+  @HttpPost("GetAllProducts")
+  public async GetAllProducts(
+    ctx: RequestContext,
+    name?: string,
+    page?: number,
+    limit?: number,
+    body?: GetAllProductsRequest
+  ) {
+    console.log("name", name);
+    console.log("page", page);
+    console.log("limit", limit);
+    console.log("body", body);
 
-  @HttpGet()
-  public async GetAllProducts(req: Request, res: Response) {
-    res.json({ message: "All products retrieved" });
-  }
-
-  @HttpPost()
-  public async NewProduct(req: Request, res: Response) {
-    res.json({ message: "New product created" });
-  }
-
-  @HttpPut()
-  public async UpdateProduct(req: Request, res: Response) {
-    res.json({ message: "Product updated" });
-  }
-
-  @HttpDelete()
-  public async DeleteProduct(req: Request, res: Response) {
-    res.json({ message: "Product deleted" });
+    ctx.response.json({ message: "All products retrieved" });
   }
 }

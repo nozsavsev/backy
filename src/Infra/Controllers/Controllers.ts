@@ -2,7 +2,41 @@ import * as core from "express-serve-static-core";
 import path from "path";
 import DIContainer from "../DI/DIContainer";
 import { rawControllersRegistry } from "./Registry";
-import { ActionMethod, ControllerDescriptor } from "./Types";
+import {
+  ActionArgumentDescriptor,
+  ActionMethod,
+  ControllerDescriptor,
+  RequestContext,
+} from "./Types";
+import { Request, Response } from "express";
+
+function getPrimitiveTypeName(type: any): string {
+  if (type === String) return "string";
+  if (type === Number) return "number";
+  if (type === Boolean) return "boolean";
+  if (type?.name) return type.name.toLowerCase();
+  return "unknown";
+}
+
+function parseQueryValue(value: any, type?: string) {
+  if (!type || type === "string") return value;
+
+  if (type === "number") {
+    const parsed = Number(value);
+    if (Number.isNaN(parsed)) {
+      throw new Error("invalid number");
+    }
+    return parsed;
+  }
+
+  if (type === "boolean") {
+    if (value === "true" || value === true) return true;
+    if (value === "false" || value === false) return false;
+    throw new Error("invalid boolean");
+  }
+
+  return value;
+}
 
 export const controllersRegistry: ControllerDescriptor[] = [];
 
@@ -40,9 +74,43 @@ function registerController(controllerClass: any) {
 
       if (!method) continue;
 
+      const types = Reflect.getMetadata(
+        "design:paramtypes",
+        prototype,
+        propertyName
+      );
+
+      console.log(Object.getOwnPropertyNames(new types[4]()));
+
+
+
+      const params = (
+        Reflect.getMetadata("method:params", prototype, propertyName) ||
+        ([] as [])
+      ).sort((a: any, b: any) => a.index - b.index);
+
+      const argumentsList: ActionArgumentDescriptor[] = [];
+
+      for (const param of params) {
+        const paramType = types[param.index];
+        argumentsList.push({
+          name: param.name,
+          type: getPrimitiveTypeName(paramType),
+          source: param.source,
+          required: param.required,
+        });
+      }
+
+      if (argumentsList.filter((arg) => arg.source === "body").length > 1) {
+        throw new Error("Only one body argument is allowed");
+      }
+
+      // console.log(argumentsList);
+
       controller.actions.push({
         name: name || propertyName,
         method: method,
+        arguments: argumentsList,
         innerFunction: controller.instance[propertyName].bind(
           controller.instance
         ),
@@ -60,7 +128,43 @@ export function mapControllers(server: core.Express) {
     controller.actions.forEach((action) => {
       server[action.method](
         path.posix.join(controller.path, action.name),
-        action.innerFunction
+        async (req: Request, res: Response) => {
+          const ctx: RequestContext = {
+            request: req,
+            response: res,
+            authz: {},
+          };
+
+          const args: any = {};
+
+          //deal with query
+          for (const arg of action.arguments.filter(
+            (arg) => arg.source === "query"
+          )) {
+            if (!req.query[arg.name]) {
+              if (arg.required) {
+                return res
+                  .status(400)
+                  .json({ error: `${arg.name} is required` });
+              }
+              continue;
+            }
+
+            let parsedValue;
+            try {
+              parsedValue = parseQueryValue(req.query[arg.name], arg.type);
+            } catch {
+              return res
+                .status(400)
+                .json({ error: `${arg.name} must be a ${arg.type}` });
+            }
+
+            args[arg.name] = parsedValue;
+          }
+
+
+          await action.innerFunction(ctx, ...Object.values(args));
+        }
       );
     });
   });

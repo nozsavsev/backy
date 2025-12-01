@@ -15,23 +15,4 @@ export default class ProductsController {
     @inject(ProductsService) public readonly ProductsService: ProductsService
   ) {}
 
-  @HttpGet()
-  public async GetAllProducts(req: Request, res: Response) {
-    res.json({ message: "All products retrieved" });
-  }
-
-  @HttpPost()
-  public async NewProduct(req: Request, res: Response) {
-    res.json({ message: "New product created" });
-  }
-
-  @HttpPut()
-  public async UpdateProduct(req: Request, res: Response) {
-    res.json({ message: "Product updated" });
-  }
-
-  @HttpDelete()
-  public async DeleteProduct(req: Request, res: Response) {
-    res.json({ message: "Product deleted" });
-  }
 }

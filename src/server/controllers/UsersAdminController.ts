@@ -8,8 +8,9 @@ import {
 import { Request, Response } from "express";
 import { inject, injectable } from "inversify";
 import UsersAdminService from "../services/UsersAdminService";
+import { RequestContext } from "../../Infra/Controllers/Types";
 
-@Controller("/api/Users")
+@Controller("/api/Admin/Users")
 @injectable()
 export default class UsersAdminController {
   constructor(
@@ -17,23 +18,4 @@ export default class UsersAdminController {
     public readonly UsersAdminService: UsersAdminService
   ) {}
 
-  @HttpGet("GetAllUsers")
-  public async GetAllUsers(req: Request, res: Response) {
-    res.json({ message: "All users retrieved" });
-  }
-
-  @HttpPost()
-  public async NewUser(req: Request, res: Response) {
-    res.json({ message: "New user created" });
-  }
-
-  @HttpPut()
-  public async UpdateUser(req: Request, res: Response) {
-    res.json({ message: "User updated" });
-  }
-
-  @HttpDelete()
-  public async DeleteUser(req: Request, res: Response) {
-    res.json({ message: "User deleted" });
-  }
 }

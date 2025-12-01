@@ -15,9 +15,16 @@
     "moduleResolution": "node",
     "declaration": true,
     "declarationMap": true,
-    "sourceMap": true
+    "sourceMap": true,
+
+    "plugins": [
+      {
+        "transform": "./src/Infra/Transformers/ReflectMethodNamesTransformer.ts",
+        "before": true,
+        "after": false
+      }
+    ]
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"]
 }
-
