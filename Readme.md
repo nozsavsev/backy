@@ -1,4 +1,4 @@
-This is a proposed skeleton; some parts are there as a placeholder, not implemented or ready for production yet.
+This is a proposed skeleton; some parts are there as a placeholder, not implemented or not ready for production yet.
 judge the idea, not the specific details of the implementation.
 
 src/infra/ contains the infrastructure code. All the decorators and DI container, and auth+z are here.
@@ -6,9 +6,9 @@ It's mostly clean, but there is some work to do, like proper docs, code organisa
 
 src/server/ contains the server code. All the controllers, services, repositories and main.ts are here.
 This is an example of how to use the infrastructure code.
-it's dirty but working
+It's dirty but working
 
-In Postman or Insomnia you can make a login request:
+In Postman or Insomnia, you can make a login request:
 post to `localhost:3000/api/AdminUsers/AddPermissionToUser`
 with body:
 ```
@@ -17,7 +17,7 @@ with body:
 	  "password": "password"
 }
 ```
-would give you elevated user with `manageUsers` permission
+would give you an elevated user with `manageUsers` permission
 
 `jane.doe@example.com` with the same password gives you a regular user
 
@@ -39,29 +39,29 @@ with body
 
 Backend is separated into 4 layers:
 
-- Middlware: handels Auth+z, Logging, etc.
-- Controller: handles the request and response, incoming data validation and sanitization, outgoing error formatting, etc.
+- Middlware: handels Auth+z, Logging, etc. _logging is not implemented, as well as unified error handling, and auth is not properly integrated with express YET_
+- Controller: handles the request and response, incoming data validation and sanitisation, outgoing error formatting, etc. _in theory rn i ddin;t do any validation because of time contraints_
 - Service: handles the business logic
-- Repository: handles the data access and 3rd party integrations
+- Repository: handles the data access and 3rd party integrations _see currently unused emailService_
 
 ## Data Models
 
-For every data model there should be a DB_Model and DTO_Model.
-with an auto mapper defined between them. (not yet defined but it is a well known package on npm that is easy to use)
+For every data model, there should be a DB_Model and a DTO_Model.
+with an auto mapper defined between them. (not yet defined, but it is a well-known package on npm that is easy to use)
 
 - DB_Models is stored in a database and used internally
-- DTO_Models are allowed to leave backend and be presented to a user and don't contain any sensetive data (like password hash or salt).
+- DTO_Models are allowed to leave the backend and be presented to a user,r and don't contain any sensitive data (like password hash or salt).
 
 ## Controllers
 
 must be imported in main.ts so it will be bundled with the server.
 will be automatically registered and mapped to the express when `mapControllers` is called.
 
-To define a controller, define a class withan  attribute controller with the first argument being the path of the controller.
+To define a controller, define a class with an  attribute named controller, where the first argument is the controller's path.
 
-API methods are defined with HttpGet, HttpPost, HttpPut, HttpDelete decorators.  
-If no path provided, the method name is used as the path.  
-Method path is always appended to controller path
+API methods are defined using the HttpGet, HttpPost, HttpPut, and HttpDelete decorators.  
+If no path is provided, the method name is used as the path.  
+Method path is always appended to the controller path
 
 ```typescript
 @Controller("/api/users")
@@ -71,24 +71,22 @@ export class UserController {
 
   @HttpGet("/")
   public getUsers(
-    @query name: string,
-    @query page: number,
-    @query limit: number,
+    req: core.Request, res: core.Response
     ctx: Context
   ): Promise<UserDTO[]> {
     //available at /api/users GET
-    return this.UserService.getUsers(name, page, limit);
+    return this.UserService.getUsers(args);
   }
 
   @HttpPut("/")
-  public updateUser(@body user: UserDTO, ctx: Context): Promise<UserDTO> {
+  public updateUser(req: core.Request, res: core.Response ctx: Context): Promise<UserDTO> {
     //available at /api/users/updateUser PUT
-    return this.UserService.updateUser(user);
+    return this.UserService.updateUser(args);
   }
 }
 ```
 
-eaach controller method marked with a Http{Method} decorator is a route handler.
+Each controller method marked with a Http{Method} decorator is a route handler.
 it receives the:
 express request, response 
 and auth+z context.
@@ -104,11 +102,11 @@ export class UserController {
 }
 ```
 
-in plans are to implement argument parser that pulls data from request body, query, params, headers, etc. according to the types of the arguments.
+Plans are to implement argument parser that pulls data from request body, query, params, headers, etc., according to the types of the arguments.
 decorators would be used to mark which data to pull, from where and how to parse it.
-however for a clean syntax that would require a typoescript transformer which i need to research first.
+However, for a clean syntax that would require a TypeScript transformer, which I need to develop first.
 
-along with that i plan to implement a way to set a return type of a method to be used as a response type for openapi generator.
+Along with that, I plan to implement a way to set a return type of a method to be used as a response type for openapi generator.
 
 ## Services
 
@@ -124,13 +122,14 @@ services must be registered BEFORE mapControllers is called
   identifier: ServiceIdentifier<IService>,
   implementation: Newable<IService>,
   lifetime: ServiceLifetime = "Transient"
-)` function is used to register a service manually.
+)` 
+function is used to register a service manually.
 
 - Transient: _default_ DI Container creates a new instance of the service each time it is requested.
 - Singleton: DI Container creates a single instance of the service and reuses it for all requests.
 - Scoped: _not implemented yet_ DI Container creates a new instance of the service for each request.
 
-__for now all services are singletons due to the initialization procedure of the controllers but it is fixable i jut didn't have time for that as it is a very small issue in the context of showing of the idea.__
+__for now all services are singletons due to the initialization procedure of the controllers but it is fixable, i just didn't have time for that as it is a very small issue in the context of showing the idea.__
 
 Services are classes that contain the business logic.
 marked with @injectable decorator to be consumed by controllers.
@@ -149,7 +148,7 @@ export class UserService {
 ## Repositories
 
 must be imported in main.ts so it will be bundled with the server.
-are registered with infra as a service, with teh same decorators as services.
+are registered with infra as a service, with the same decorators as services.
 
 Repositories are classes that contain the data access and 3rd party integrations logic.
 marked with @injectable decorator to be consumed by services.
@@ -211,9 +210,7 @@ type DB_User = {
   id: string;
   email: string;
   permissions:
-    | "manageUsers"
-    | "manageProducts"
-    | "readProducts";
+    | "manageUsers";
 };
 ```
 
@@ -267,9 +264,10 @@ export class ManageUsersPolicy extends AuthorizationPolicy {
       failureReason: FailureReasonType.manageUsers,
     };
   }
-```
+
 }
 ```
+
 all policies must be imported in main to be bundled with the server.
 
 
@@ -279,9 +277,10 @@ authZ is mocked,
 database is mocked (in memory array)
 models are obviously not meant for production but rather for testing and prototyping.
 i know that storing passwords in plaintext is bad ususally i use Argon2ID with per-user generated salt, which is an industry standard.
+some other stuff that concerns you but I forgot to write it down here :/
 
 plans
 in future i plan on making an auto-importer typoescript transformer that scans all the source files for needed decorators and imports needed files in main.ts automatically.
-better code organization and express integration
+and a lot more
 proper service lifetime
 and many more
