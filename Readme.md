@@ -1,19 +1,41 @@
-this is a proposed skeleton, some parts are there as a placeholder not implemented or ready for production yet.
-judge the idea not specific details of the implementation.
+This is a proposed skeleton; some parts are there as a placeholder, not implemented or ready for production yet.
+judge the idea, not the specific details of the implementation.
 
-src/infra/ contains the infrastructure code. all the decorators and DI container are here.
+src/infra/ contains the infrastructure code. All the decorators and DI container, and auth+z are here.
+It's mostly clean, but there is some work to do, like proper docs, code organisation and deeper express integration that is much better than what I have now :/
 
-src/server/ contains the server code. all the controllers, services, repositories and main.ts are here.
-this is an expample of how to use the infrastructure code.
+src/server/ contains the server code. All the controllers, services, repositories and main.ts are here.
+This is an example of how to use the infrastructure code.
+it's dirty but working
 
-this projects implements a sample server with:
- - user (register login getCurrentUser)
- - userAdmin (addPermission removePermission)
+In Postman or Insomnia you can make a login request:
+post to `localhost:3000/api/AdminUsers/AddPermissionToUser`
+with body:
+```
+{
+   "userId": "john.doe@example.com",
+	  "password": "password"
+}
+```
+would give you elevated user with `manageUsers` permission
 
-authZ is mocked, 
-database is mocked (in memory array)
-models are obviously not meant for production but rather for testing and prototyping.
-i know that storing passwords in plaintext is bad ususally i use Argon2ID with per-user generated salt, which is an industry standard.
+`jane.doe@example.com` with the same password gives you a regular user
+
+You can fetch the current user on 
+GET `localhost:3000/api/Users/CurrentUser`
+
+and try making a request that requires a permission on 
+POST `localhost:3000/api/AdminUsers/AddPermissionToUser`
+with body 
+```
+{
+   "userId": "john.doe@example.com",
+	  "permission": "manageUsers"
+}
+```
+
+
+
 
 Backend is separated into 4 layers:
 
@@ -35,7 +57,7 @@ with an auto mapper defined between them. (not yet defined but it is a well know
 must be imported in main.ts so it will be bundled with the server.
 will be automatically registered and mapped to the express when `mapControllers` is called.
 
-To define a controller define a class with attribute controller with first argument being the path of the controller.
+To define a controller, define a class withan  attribute controller with the first argument being the path of the controller.
 
 API methods are defined with HttpGet, HttpPost, HttpPut, HttpDelete decorators.  
 If no path provided, the method name is used as the path.  
@@ -245,8 +267,21 @@ export class ManageUsersPolicy extends AuthorizationPolicy {
       failureReason: FailureReasonType.manageUsers,
     };
   }
+```
 }
 ```
 all policies must be imported in main to be bundled with the server.
 
-__in future i plan on making an auto-importer typoescript transformer that scans all the source files for needed decorators and imports needed files in main.ts automatically.__
+
+# notes
+
+authZ is mocked, 
+database is mocked (in memory array)
+models are obviously not meant for production but rather for testing and prototyping.
+i know that storing passwords in plaintext is bad ususally i use Argon2ID with per-user generated salt, which is an industry standard.
+
+plans
+in future i plan on making an auto-importer typoescript transformer that scans all the source files for needed decorators and imports needed files in main.ts automatically.
+better code organization and express integration
+proper service lifetime
+and many more
