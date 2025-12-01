@@ -219,8 +219,8 @@ Setting `@Authorize("policyName")` decorator on a controller method will check i
 ```typescript
 @HttpGet("/")
 @Authorize("manageUsers")
-public getUsers(@query name: string, @query page: number, @query limit: number, ctx: Context): Promise<UserDTO[]> {
-  return this.UserService.getUsers(name, page, limit);
+public getUsers(req: core.Request, res: core.Response ctx: Context): Promise<UserDTO[]> {
+  return this.UserService.getUsers(args);
 }
 ```
 
