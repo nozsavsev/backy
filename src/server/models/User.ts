@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from "uuid";
-import { IDBModel } from "../../Infra/Respository/BaseDBModel";
+import { IDBModel } from "../../infra/Respository/BaseDBModel";
 import { PermissionType } from "../Auth/Permissions";
 
 export class DB_User implements IDBModel {

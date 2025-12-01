@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from "uuid";
-import { IDBModel } from "../../Infra/Respository/BaseDBModel";
+import { IDBModel } from "../../infra/Respository/BaseDBModel";
 
 export class DB_Product implements IDBModel {
   public id: string = uuidv4();

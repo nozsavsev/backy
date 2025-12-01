@@ -4,13 +4,11 @@ judge the idea not specific details of the implementation.
 src/infra/ contains the infrastructure code. all the decorators and DI container are here.
 
 src/server/ contains the server code. all the controllers, services, repositories and main.ts are here.
+this is an expample of how to use the infrastructure code.
 
 this projects implements a sample server with:
- - user (register login logout delete update)
- - userAdmin (delete update)
-
- - product (read, filter)
- - productAdmin (CRUD)
+ - user (register login getCurrentUser)
+ - userAdmin (addPermission removePermission)
 
 authZ is mocked, 
 database is mocked (in memory array)
@@ -19,7 +17,7 @@ i know that storing passwords in plaintext is bad ususally i use Argon2ID with p
 
 Backend is separated into 4 layers:
 
-- Middlware: handels Authz, Logging, etc.
+- Middlware: handels Auth+z, Logging, etc.
 - Controller: handles the request and response, incoming data validation and sanitization, outgoing error formatting, etc.
 - Service: handles the business logic
 - Repository: handles the data access and 3rd party integrations
@@ -27,10 +25,10 @@ Backend is separated into 4 layers:
 ## Data Models
 
 For every data model there should be a DB_Model and DTO_Model.
-with an auto mapper defined between them.
+with an auto mapper defined between them. (not yet defined but it is a well known package on npm that is easy to use)
 
 - DB_Models is stored in a database and used internally
-- DTO_Models are allowed to leave backend and be presented to a user and don't contain any sensetive data.
+- DTO_Models are allowed to leave backend and be presented to a user and don't contain any sensetive data (like password hash or salt).
 
 ## Controllers
 
@@ -70,12 +68,8 @@ export class UserController {
 
 eaach controller method marked with a Http{Method} decorator is a route handler.
 it receives the:
-
-- method arguments: that are read and parsed according to types from @body or @query
-- ctx:Context object containing request, response and authz context.
-
-return type must be specified for openapi generator to work.
-_openapi generator is not implemented YET_
+express request, response 
+and auth+z context.
 
 backy automatically creates an instance of a controller class and binds method to that intance before passing function to express as handler so you can use dependency injection and all resources in the class of your methods.
 
@@ -88,6 +82,12 @@ export class UserController {
 }
 ```
 
+in plans are to implement argument parser that pulls data from request body, query, params, headers, etc. according to the types of the arguments.
+decorators would be used to mark which data to pull, from where and how to parse it.
+however for a clean syntax that would require a typoescript transformer which i need to research first.
+
+along with that i plan to implement a way to set a return type of a method to be used as a response type for openapi generator.
+
 ## Services
 
 must be imported in main.ts so it will be bundled with the server.
@@ -96,11 +96,19 @@ will be automatically registered and mapped to the express when `mapServices` is
 
 if service is not marked with @Service decorator, it can be registered manually in main.ts binding concrete implementation to an abstract interface.
 
-`registerService<InterfaceName, ImplementationName>(Lifetime: "Singleton" | "Scoped")` function is used to register a service manually.
+services must be registered BEFORE mapControllers is called
+
+`RegisterImplementationService<IService>(
+  identifier: ServiceIdentifier<IService>,
+  implementation: Newable<IService>,
+  lifetime: ServiceLifetime = "Transient"
+)` function is used to register a service manually.
 
 - Transient: _default_ DI Container creates a new instance of the service each time it is requested.
 - Singleton: DI Container creates a single instance of the service and reuses it for all requests.
 - Scoped: _not implemented yet_ DI Container creates a new instance of the service for each request.
+
+__for now all services are singletons due to the initialization procedure of the controllers but it is fixable i jut didn't have time for that as it is a very small issue in the context of showing of the idea.__
 
 Services are classes that contain the business logic.
 marked with @injectable decorator to be consumed by controllers.
@@ -183,10 +191,7 @@ type DB_User = {
   permissions:
     | "manageUsers"
     | "manageProducts"
-    | "manageOrders"
-    | "manageUsers"
-    | "manageProducts"
-    | "manageOrders";
+    | "readProducts";
 };
 ```
 
@@ -200,7 +205,7 @@ public getUsers(@query name: string, @query page: number, @query limit: number, 
 }
 ```
 
-to define a policy: define a class with attribute policy with first argument being the policy name.
+to define a policy: define a class with attribute `@Policy("policyName")` with first argument being the policy name.
 
 base class contains a `handle` method that is called to check if the user has the required permissions to access the resource.
 it can be overridden to implement the policy logic.
@@ -242,3 +247,6 @@ export class ManageUsersPolicy extends AuthorizationPolicy {
   }
 }
 ```
+all policies must be imported in main to be bundled with the server.
+
+__in future i plan on making an auto-importer typoescript transformer that scans all the source files for needed decorators and imports needed files in main.ts automatically.__

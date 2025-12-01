@@ -1,15 +1,17 @@
 import {
+  Authorize,
   Controller,
   HttpDelete,
   HttpGet,
   HttpPost,
   HttpPut,
-} from "../../Infra/Controllers/Decorators";
+} from "../../infra/Controllers/Decorators";
 import { Request, Response } from "express";
 import { inject, injectable } from "inversify";
 import UsersAdminService from "../services/UsersAdminService";
+import { AuthorizationContext } from "../../infra/AuthZ/Types";
 
-@Controller("/api/Users")
+@Controller("/api/AdminUsers")
 @injectable()
 export default class UsersAdminController {
   constructor(
@@ -17,23 +19,25 @@ export default class UsersAdminController {
     public readonly UsersAdminService: UsersAdminService
   ) {}
 
-  @HttpGet("GetAllUsers")
-  public async GetAllUsers(req: Request, res: Response) {
-    res.json({ message: "All users retrieved" });
+ 
+  @HttpPost("AddPermissionToUser")
+  @Authorize("ManageUsers")
+  public async AddPermissionToUser(req: Request, res: Response, ctx: AuthorizationContext) {
+    const { userId, permission } = req.body;
+    
+    
+    console.log("adding permission to user", userId, permission);
+
+    res.json({ message: "Permission added to user" });
   }
 
-  @HttpPost()
-  public async NewUser(req: Request, res: Response) {
-    res.json({ message: "New user created" });
-  }
+  @HttpDelete("RemovePermissionFromUser")
+  @Authorize("ManageUsers")
+  public async RemovePermissionFromUser(req: Request, res: Response, ctx: AuthorizationContext) {
+    const { userId, permission } = req.body;
+     
+    console.log("removing permission from user", userId, permission);
 
-  @HttpPut()
-  public async UpdateUser(req: Request, res: Response) {
-    res.json({ message: "User updated" });
-  }
-
-  @HttpDelete()
-  public async DeleteUser(req: Request, res: Response) {
-    res.json({ message: "User deleted" });
+    res.json({ message: "Permission removed from user" });
   }
 }

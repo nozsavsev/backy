@@ -1,37 +1,40 @@
+import 'dotenv/config'
+
+
 import "reflect-metadata";
 import express from "express";
 
 //import all controllers
-import "./controllers/UsersController";
-import "./controllers/ProductsController";
-import "./controllers/ProductsAdminController";
-import "./controllers/UsersAdminController";
+import "./controllers/consolidate-import";
 
 //import all services
-import "./services/UsersService";
-import "./services/ProductsService";
-import "./services/ProductsAdminService";
-import "./services/UsersAdminService";
-
-//import all email services
-import "./services/Email/AmazonSESEmailService";
-import "./services/Email/SendgridEmailService";
+import "./services/consolidate-import";
 
 //import all repositories
-import "./repositories/UserRepository";
-import "./repositories/ProductRepository";
+import "./repositories/consolidate-import";
 
-import { mapControllers } from "../Infra/Controllers/Controllers";
-import DIContainer, {
+//import all policies
+import "./Auth/consolidate-import";
+
+import {
+  DIContainer,
+  mapControllers,
   RegisterDecoratedServices,
   RegisterImplementationService,
-} from "../Infra/DI/DIContainer";
-import { AmazonSESEmailService } from "./services/Email/AmazonSESEmailService";
+} from "../infra";
 import {
   I_EMAIL_SERVICE_TOKEN,
   IEmailService,
 } from "./services/Email/IEmailService";
-import { SendGridEmailService } from "./services/Email/SendgridEmailService";
+import {
+  SendGridEmailService,
+  UsersAdminService,
+  UsersService,
+} from "./services/consolidate-import";
+import { UsersController } from "./controllers/consolidate-import";
+import AuthMiddleware from "../infra/AuthZ/Middlware";
+import cookieParser from "cookie-parser";
+import { mapPolicies } from "../infra/AuthZ/Policies";
 
 const app = express();
 
@@ -39,6 +42,7 @@ const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser())
 
 RegisterDecoratedServices();
 
@@ -48,7 +52,24 @@ RegisterImplementationService<IEmailService>(
   "Singleton"
 );
 
+
+{
+  const usersService = DIContainer.get(UsersService);
+  let adminUser = usersService.registerUser("John Doe", "john.doe@example.com", "password", "1");
+  usersService.registerUser("Jane Doe", "jane.doe@example.com", "password", "2");
+  
+  const adminusersService = DIContainer.get(UsersAdminService);
+  adminusersService.addPermissionToUser(adminUser.id, "manageUsers");
+}
+
+
 mapControllers(app);
+
+mapPolicies();
+
+app.get("/", (req, res) => {
+  res.send("Hello World");
+});
 
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
